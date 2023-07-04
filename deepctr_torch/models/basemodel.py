@@ -94,7 +94,7 @@ class Linear(nn.Module):
 
 class BaseModel(nn.Module):
     def __init__(self, linear_feature_columns, dnn_feature_columns, l2_reg_linear=1e-5, l2_reg_embedding=1e-5,
-                 init_std=0.0001, seed=1024, task='binary', device='cpu', gpus=None):
+                 init_std=0.0001, seed=1024, task='binary', device='cpu', gpus=None, labels=None):
 
         super(BaseModel, self).__init__()
         torch.manual_seed(seed)
@@ -104,6 +104,7 @@ class BaseModel(nn.Module):
         self.aux_loss = torch.zeros((1,), device=device)
         self.device = device
         self.gpus = gpus
+        self.labels = labels
         if gpus and str(self.gpus[0]) not in self.device:
             raise ValueError(
                 "`gpus[0]` should be the same gpu with `device`")
@@ -266,7 +267,9 @@ class BaseModel(nn.Module):
                                 if name not in train_result:
                                     train_result[name] = []
                                 train_result[name].append(metric_fun(
-                                    y.cpu().data.numpy(), y_pred.cpu().data.numpy().astype("float64")))
+                                    y.cpu().data.numpy(), y_pred.cpu().data.numpy().astype("float64"),
+                                    labels = self.labels
+                                    ))
 
 
             except KeyboardInterrupt:
