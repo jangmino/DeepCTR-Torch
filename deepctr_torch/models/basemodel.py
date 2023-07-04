@@ -243,7 +243,8 @@ class BaseModel(nn.Module):
                         x = x_train.to(self.device).float()
                         y = y_train.to(self.device).float()
 
-                        y_pred = model(x).squeeze()
+                        # y_pred = model(x).squeeze()
+                        y_pred = model(x)
 
                         optim.zero_grad()
                         if isinstance(loss_func, list):
@@ -252,7 +253,8 @@ class BaseModel(nn.Module):
                             loss = sum(
                                 [loss_func[i](y_pred[:, i], y[:, i], reduction='sum') for i in range(self.num_tasks)])
                         else:
-                            loss = loss_func(y_pred, y.squeeze(), reduction='sum')
+                            loss = loss_func(y_pred, y, reduction='sum')
+                            # loss = loss_func(y_pred, y.squeeze(), reduction='sum')
                         reg_loss = self.get_regularization_loss()
 
                         total_loss = loss + reg_loss + self.aux_loss
@@ -266,6 +268,7 @@ class BaseModel(nn.Module):
                             for name, metric_fun in self.metrics.items():
                                 if name not in train_result:
                                     train_result[name] = []
+                                # print(f"{y.cpu().data.numpy().shape=}, {y_pred.cpu().data.numpy().shape=}")
                                 train_result[name].append(metric_fun(
                                     y.cpu().data.numpy(), y_pred.cpu().data.numpy().astype("float64"),
                                     labels = self.labels
@@ -322,7 +325,7 @@ class BaseModel(nn.Module):
         pred_ans = self.predict(x, batch_size)
         eval_result = {}
         for name, metric_fun in self.metrics.items():
-            eval_result[name] = metric_fun(y, pred_ans)
+            eval_result[name] = metric_fun(y, pred_ans, labels=self.labels)
         return eval_result
 
     def predict(self, x, batch_size=256):
